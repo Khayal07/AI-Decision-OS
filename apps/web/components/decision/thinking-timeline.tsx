@@ -5,7 +5,12 @@ import type { AgentStatus } from "@/lib/types";
 const STEPS = [
   "Understanding the decision",
   "Scoring the options",
+  "Gathering evidence",
+  "Assessing risks",
+  "Analyzing costs",
+  "Checking fit & regret",
   "Weighing the verdict",
+  "Verifying consistency",
   "Finalizing recommendation",
 ];
 
