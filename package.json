@@ -5,7 +5,7 @@
   "description": "AI Decision OS — a universal AI decision-making operating system.",
   "packageManager": "pnpm@11.9.0",
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "scripts": {
     "dev": "turbo run dev",
