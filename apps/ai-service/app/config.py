@@ -10,20 +10,18 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
-    # LLM providers
-    anthropic_api_key: str = ""
-    openai_api_key: str = ""
-    voyage_api_key: str = ""
+    # LLM provider — OpenRouter (OpenAI-compatible), free models.
+    openrouter_api_key: str = ""
+    openrouter_base_url: str = "https://openrouter.ai/api/v1"
 
-    # Model routing defaults (see plan §11 — Model Router)
-    model_judge: str = "claude-opus-4-8"
-    model_subagent: str = "claude-haiku-4-5-20251001"
-    embedding_model: str = "voyage-3"
+    # Model routing defaults (free OpenRouter model ids; override via env).
+    model_judge: str = "deepseek/deepseek-chat-v3-0324:free"
+    model_subagent: str = "meta-llama/llama-3.3-70b-instruct:free"
 
-    # Service auth (the Next.js BFF authenticates with this shared token)
+    # Service auth (the Next.js BFF authenticates with this shared token).
     ai_service_token: str = "dev-internal-token"
 
-    # CORS — only the BFF should call this service directly
+    # CORS — only the BFF should call this service directly.
     cors_origins: list[str] = ["http://localhost:3000"]
 
 

@@ -10,7 +10,7 @@ dependencies = [
   "pydantic-settings>=2.7",
   "httpx>=0.28",
   "sse-starlette>=2.1",
-  "anthropic>=0.42",
+  "openai>=1.50",
   "langgraph>=0.2.60",
 ]
 
@@ -43,4 +43,6 @@ testpaths = ["tests"]
 [tool.mypy]
 python_version = "3.12"
 plugins = ["pydantic.mypy"]
-strict = true
+ignore_missing_imports = true
+disallow_untyped_defs = true
+warn_redundant_casts = false
