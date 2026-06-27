@@ -8,7 +8,7 @@ and SSE streaming land in Phase 1.
 from fastapi import APIRouter
 
 from app import __version__
-from app.schemas.decision import AnalyzeAccepted, AnalyzeRequest, HealthResponse
+from app.schemas.decision import AnalyzeRequest, HealthResponse
 
 router = APIRouter()
 
@@ -19,11 +19,11 @@ async def health() -> HealthResponse:
     return HealthResponse(status="ok", version=__version__)
 
 
-@router.post("/analyze", response_model=AnalyzeAccepted, tags=["decisions"])
-async def analyze(request: AnalyzeRequest) -> AnalyzeAccepted:
-    """Run the multi-agent decision pipeline (stubbed in Phase 0)."""
-    return AnalyzeAccepted(
-        decision_id=request.decision_id,
-        status="not_implemented",
-        message="Multi-agent pipeline lands in Phase 1.",
-    )
+@router.post("/analyze", tags=["decisions"])
+async def analyze(request: AnalyzeRequest) -> dict[str, str | None]:
+    """Run the multi-agent decision pipeline (SSE streaming added in the next step)."""
+    return {
+        "decision_id": request.decision_id,
+        "status": "not_implemented",
+        "message": "SSE streaming endpoint lands next.",
+    }
