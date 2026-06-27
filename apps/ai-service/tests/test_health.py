@@ -1,7 +1,8 @@
 """Smoke tests for the Phase 0 skeleton."""
 
-from app.main import app
 from fastapi.testclient import TestClient
+
+from app.main import app
 
 client = TestClient(app)
 

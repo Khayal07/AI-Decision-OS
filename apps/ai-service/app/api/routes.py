@@ -5,9 +5,10 @@ integration contract exists end to end. The multi-agent pipeline (LangGraph)
 and SSE streaming land in Phase 1.
 """
 
+from fastapi import APIRouter
+
 from app import __version__
 from app.schemas.decision import AnalyzeAccepted, AnalyzeRequest, HealthResponse
-from fastapi import APIRouter
 
 router = APIRouter()
 
