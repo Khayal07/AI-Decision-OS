@@ -1,4 +1,4 @@
-import { DecisionInput } from "@/components/decision-input";
+import { DecisionExperience } from "@/components/decision/decision-experience";
 
 export default function Home() {
   return (
@@ -33,7 +33,7 @@ export default function Home() {
         </p>
 
         <div className="mt-10 w-full max-w-xl">
-          <DecisionInput />
+          <DecisionExperience />
         </div>
 
         <p className="mt-16 text-xs text-muted-foreground">
