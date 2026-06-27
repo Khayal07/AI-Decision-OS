@@ -1,0 +1,3 @@
+-- Seed data for local development.
+-- Intentionally empty for Phase 0: decisions are created per authenticated user
+-- and depend on auth.users, which is populated via the Supabase auth flow.
