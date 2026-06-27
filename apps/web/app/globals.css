@@ -1,0 +1,68 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Design tokens — premium, calm, Apple/Linear-inspired.
+ * Light + dark themes via CSS variables, exposed to Tailwind through @theme inline.
+ */
+:root {
+  --background: oklch(0.99 0 0);
+  --foreground: oklch(0.18 0.01 270);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.18 0.01 270);
+  --muted: oklch(0.96 0.004 270);
+  --muted-foreground: oklch(0.5 0.02 270);
+  --border: oklch(0.92 0.005 270);
+  --accent: oklch(0.55 0.21 285);
+  --accent-foreground: oklch(0.99 0 0);
+  --ring: oklch(0.62 0.19 285);
+  --radius: 0.9rem;
+}
+
+.dark {
+  --background: oklch(0.16 0.012 270);
+  --foreground: oklch(0.97 0.004 270);
+  --card: oklch(0.2 0.014 270);
+  --card-foreground: oklch(0.97 0.004 270);
+  --muted: oklch(0.27 0.016 270);
+  --muted-foreground: oklch(0.71 0.02 270);
+  --border: oklch(0.3 0.016 270);
+  --accent: oklch(0.7 0.17 288);
+  --accent-foreground: oklch(0.16 0.012 270);
+  --ring: oklch(0.7 0.17 288);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-ring: var(--ring);
+
+  --font-sans: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+
+  --radius-md: calc(var(--radius) - 0.25rem);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 0.4rem);
+}
+
+* {
+  border-color: var(--color-border);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
