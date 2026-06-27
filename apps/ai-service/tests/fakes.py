@@ -4,6 +4,8 @@ from typing import Any
 
 from app.schemas.decision import (
     AnalyzerOutput,
+    ClarifyQuestion,
+    ClarifyResponse,
     Criterion,
     CriterionScore,
     EvidenceItem,
@@ -87,6 +89,11 @@ async def fake_complete_json(*, schema: type[Any], **_: Any) -> Any:
                 OptionPsychology(name="MacBook Air", regret_risk=3, fit=8),
                 OptionPsychology(name="MacBook Pro", regret_risk=4, fit=7),
             ]
+        )
+    if schema is ClarifyResponse:
+        # four questions, to verify the route truncates to three
+        return ClarifyResponse(
+            questions=[ClarifyQuestion(question=f"Q{i}?", options=["a", "b"]) for i in range(4)]
         )
     if schema is VerifierOutput:
         return VerifierOutput(consistent=True, issues=[], confidence_adjustment=5)

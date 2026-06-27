@@ -28,6 +28,15 @@ class AnalyzeRequest(BaseModel):
     user_id: str | None = Field(default=None, description="Owner id, for personalization.")
 
 
+class ClarifyQuestion(BaseModel):
+    question: str
+    options: list[str] = Field(default_factory=list, description="Suggested answer chips.")
+
+
+class ClarifyResponse(BaseModel):
+    questions: list[ClarifyQuestion] = Field(default_factory=list)
+
+
 # --- shared ------------------------------------------------------------------
 class Criterion(BaseModel):
     name: str

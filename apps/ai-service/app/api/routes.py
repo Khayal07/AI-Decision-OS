@@ -15,7 +15,13 @@ from sse_starlette.sse import EventSourceResponse
 from app import __version__
 from app.config import get_settings
 from app.graph.build import build_graph
-from app.schemas.decision import AnalyzeRequest, HealthResponse
+from app.graph.prompts import CLARIFY_SYS
+from app.router.llm import complete_json
+from app.schemas.decision import (
+    AnalyzeRequest,
+    ClarifyResponse,
+    HealthResponse,
+)
 
 router = APIRouter()
 
@@ -58,6 +64,23 @@ async def _decision_events(query: str) -> AsyncIterator[dict[str, str]]:
         yield {"event": "done", "data": "{}"}
     except Exception as exc:  # surface failures to the client as an SSE error event
         yield {"event": "error", "data": json.dumps({"message": str(exc)})}
+
+
+@router.post(
+    "/clarify",
+    tags=["decisions"],
+    dependencies=[Depends(require_service_token)],
+)
+async def clarify(request: AnalyzeRequest) -> ClarifyResponse:
+    """Return up to 3 clarifying questions — or none if the decision is clear."""
+    response = await complete_json(
+        system=CLARIFY_SYS,
+        user=request.query,
+        schema=ClarifyResponse,
+        model=get_settings().model_subagent,
+    )
+    response.questions = response.questions[:3]
+    return response
 
 
 @router.post("/analyze", tags=["decisions"], dependencies=[Depends(require_service_token)])

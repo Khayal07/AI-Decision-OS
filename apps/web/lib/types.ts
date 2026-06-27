@@ -51,3 +51,5 @@ export type DecisionResult = {
 };
 
 export type AgentStatus = { node: string; label: string };
+
+export type ClarifyQuestion = { question: string; options: string[] };
