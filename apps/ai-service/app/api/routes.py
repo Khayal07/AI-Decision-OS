@@ -1,16 +1,36 @@
 """API routes for the AI service.
 
-Phase 0 exposes a health check and a stubbed `/analyze` endpoint so the BFF
-integration contract exists end to end. The multi-agent pipeline (LangGraph)
-and SSE streaming land in Phase 1.
+`/analyze` runs the LangGraph pipeline and streams agent progress + the final
+decision over Server-Sent Events. The Next.js BFF authenticates with a shared
+service token and proxies the stream to the browser.
 """
 
-from fastapi import APIRouter
+import json
+from collections.abc import AsyncIterator
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Header, HTTPException
+from sse_starlette.sse import EventSourceResponse
 
 from app import __version__
+from app.config import get_settings
+from app.graph.build import build_graph
 from app.schemas.decision import AnalyzeRequest, HealthResponse
 
 router = APIRouter()
+
+NODE_LABELS = {
+    "analyze": "Understanding the decision",
+    "rank": "Scoring the options",
+    "judge": "Weighing the verdict",
+    "assemble": "Finalizing recommendation",
+}
+
+
+async def require_service_token(x_service_token: Annotated[str, Header()] = "") -> None:
+    """Reject calls that don't present the shared service token."""
+    if x_service_token != get_settings().ai_service_token:
+        raise HTTPException(status_code=401, detail="invalid service token")
 
 
 @router.get("/health", response_model=HealthResponse, tags=["system"])
@@ -19,11 +39,23 @@ async def health() -> HealthResponse:
     return HealthResponse(status="ok", version=__version__)
 
 
-@router.post("/analyze", tags=["decisions"])
-async def analyze(request: AnalyzeRequest) -> dict[str, str | None]:
-    """Run the multi-agent decision pipeline (SSE streaming added in the next step)."""
-    return {
-        "decision_id": request.decision_id,
-        "status": "not_implemented",
-        "message": "SSE streaming endpoint lands next.",
-    }
+async def _decision_events(query: str) -> AsyncIterator[dict[str, str]]:
+    graph = build_graph()
+    try:
+        async for chunk in graph.astream({"query": query}, stream_mode="updates"):
+            for node, update in chunk.items():
+                yield {
+                    "event": "status",
+                    "data": json.dumps({"node": node, "label": NODE_LABELS.get(node, node)}),
+                }
+                if node == "assemble":
+                    yield {"event": "result", "data": update["result"].model_dump_json()}
+        yield {"event": "done", "data": "{}"}
+    except Exception as exc:  # surface failures to the client as an SSE error event
+        yield {"event": "error", "data": json.dumps({"message": str(exc)})}
+
+
+@router.post("/analyze", tags=["decisions"], dependencies=[Depends(require_service_token)])
+async def analyze(request: AnalyzeRequest) -> EventSourceResponse:
+    """Stream the multi-agent decision pipeline as Server-Sent Events."""
+    return EventSourceResponse(_decision_events(request.query))
