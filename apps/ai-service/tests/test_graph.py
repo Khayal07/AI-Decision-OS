@@ -21,3 +21,8 @@ async def test_graph_runs_end_to_end(monkeypatch: pytest.MonkeyPatch) -> None:
     assert result.options[0].is_winner is True
     assert result.winner == result.options[0].name
     assert 0 <= result.confidence <= 100
+    # specialist enrichment merged in
+    assert result.options[0].risk_level is not None
+    assert result.options[0].long_term_value is not None
+    assert result.options[0].fit is not None
+    assert len(result.evidence) >= 1

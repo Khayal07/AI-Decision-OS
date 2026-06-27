@@ -22,7 +22,12 @@ router = APIRouter()
 NODE_LABELS = {
     "analyze": "Understanding the decision",
     "rank": "Scoring the options",
+    "research": "Gathering evidence",
+    "risk": "Assessing risks",
+    "financial": "Analyzing costs",
+    "psychology": "Checking fit & regret",
     "judge": "Weighing the verdict",
+    "verifier": "Verifying consistency",
     "assemble": "Finalizing recommendation",
 }
 

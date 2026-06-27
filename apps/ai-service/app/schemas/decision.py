@@ -1,8 +1,9 @@
 """Decision request/response contracts.
 
-Three layers:
-- request/response envelopes (`AnalyzeRequest`, `HealthResponse`)
-- per-agent structured outputs (`AnalyzerOutput`, `RankingOutput`, `JudgeOutput`)
+Layers:
+- envelopes (`AnalyzeRequest`, `HealthResponse`)
+- per-agent outputs (analyzer, ranking, research, risk, financial, psychology,
+  judge, verifier)
 - the assembled `DecisionResult` the dashboard renders
 """
 
@@ -11,6 +12,7 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 Direction = Literal["higher_better", "lower_better"]
+RiskLevel = Literal["low", "medium", "high"]
 
 
 # --- envelopes ---------------------------------------------------------------
@@ -33,10 +35,21 @@ class Criterion(BaseModel):
     direction: Direction = "higher_better"
 
 
+class RiskItem(BaseModel):
+    description: str
+    severity: int = Field(..., ge=1, le=5)
+    likelihood: int = Field(..., ge=1, le=5)
+    mitigation: str | None = None
+
+
+class EvidenceItem(BaseModel):
+    claim: str
+    credibility: float = Field(..., ge=0, le=1)
+    supports: str | None = Field(default=None, description="Option name this supports, if any.")
+
+
 # --- agent outputs -----------------------------------------------------------
 class AnalyzerOutput(BaseModel):
-    """Decision Analyzer: structure the problem."""
-
     title: str
     decision_type: str
     options: list[str] = Field(..., min_length=2)
@@ -45,7 +58,7 @@ class AnalyzerOutput(BaseModel):
 
 class CriterionScore(BaseModel):
     criterion: str
-    score: float = Field(..., ge=0, le=10, description="Raw score for this criterion, 0..10.")
+    score: float = Field(..., ge=0, le=10)
 
 
 class RankedOption(BaseModel):
@@ -56,18 +69,56 @@ class RankedOption(BaseModel):
 
 
 class RankingOutput(BaseModel):
-    """Ranking Agent: score every option on every criterion."""
-
     options: list[RankedOption] = Field(..., min_length=2)
 
 
-class JudgeOutput(BaseModel):
-    """Final Judge: pick a winner and explain it."""
+class ResearchOutput(BaseModel):
+    evidence: list[EvidenceItem] = Field(default_factory=list)
 
+
+class OptionRisk(BaseModel):
+    name: str
+    risk_level: RiskLevel = "medium"
+    risks: list[RiskItem] = Field(default_factory=list)
+
+
+class RiskOutput(BaseModel):
+    options: list[OptionRisk] = Field(..., min_length=1)
+
+
+class OptionFinance(BaseModel):
+    name: str
+    upfront_cost: float | None = None
+    long_term_value: float = Field(..., ge=0, le=10)
+    note: str | None = None
+
+
+class FinancialOutput(BaseModel):
+    options: list[OptionFinance] = Field(..., min_length=1)
+
+
+class OptionPsychology(BaseModel):
+    name: str
+    regret_risk: float = Field(..., ge=0, le=10)
+    fit: float = Field(..., ge=0, le=10)
+    note: str | None = None
+
+
+class PsychologyOutput(BaseModel):
+    options: list[OptionPsychology] = Field(..., min_length=1)
+
+
+class JudgeOutput(BaseModel):
     winner: str
     confidence: float = Field(..., ge=0, le=100)
     recommendation: str
     reasoning: str
+
+
+class VerifierOutput(BaseModel):
+    consistent: bool = True
+    issues: list[str] = Field(default_factory=list)
+    confidence_adjustment: float = Field(default=0, ge=-25, le=15)
 
 
 # --- assembled result --------------------------------------------------------
@@ -79,6 +130,13 @@ class OptionResult(BaseModel):
     pros: list[str] = Field(default_factory=list)
     cons: list[str] = Field(default_factory=list)
     criterion_scores: dict[str, float] = Field(default_factory=dict)
+    # enriched by the specialist agents (optional)
+    risk_level: RiskLevel | None = None
+    risks: list[RiskItem] = Field(default_factory=list)
+    upfront_cost: float | None = None
+    long_term_value: float | None = None
+    regret_risk: float | None = None
+    fit: float | None = None
 
 
 class DecisionResult(BaseModel):
@@ -90,3 +148,5 @@ class DecisionResult(BaseModel):
     confidence: float = Field(..., ge=0, le=100)
     recommendation: str
     reasoning: str
+    evidence: list[EvidenceItem] = Field(default_factory=list)
+    verifier_issues: list[str] = Field(default_factory=list)
