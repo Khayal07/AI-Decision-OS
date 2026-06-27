@@ -1,0 +1,25 @@
+services:
+  ai-service:
+    build:
+      context: ./apps/ai-service
+    environment:
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      OPENROUTER_BASE_URL: ${OPENROUTER_BASE_URL:-https://openrouter.ai/api/v1}
+      AI_SERVICE_TOKEN: ${AI_SERVICE_TOKEN:-dev-internal-token}
+      MODEL_JUDGE: ${MODEL_JUDGE:-deepseek/deepseek-chat-v3-0324:free}
+      MODEL_SUBAGENT: ${MODEL_SUBAGENT:-meta-llama/llama-3.3-70b-instruct:free}
+      CORS_ORIGINS: '["http://localhost:3000"]'
+    ports:
+      - "8000:8000"
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    environment:
+      AI_SERVICE_URL: http://ai-service:8000
+      AI_SERVICE_TOKEN: ${AI_SERVICE_TOKEN:-dev-internal-token}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - ai-service

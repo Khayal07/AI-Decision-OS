@@ -1,0 +1,10 @@
+.git
+**/node_modules
+**/.next
+**/.turbo
+**/.venv
+**/__pycache__
+**/dist
+**/*.log
+.env
+**/.env
