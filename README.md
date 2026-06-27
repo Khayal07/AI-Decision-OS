@@ -21,3 +21,17 @@ Turn complex decisions into simple, data-driven, and personalized choices with A
 - Decision history and preference learning
 
 AI Decision OS aims to make decision-making faster, smarter, and more confident.
+
+## Run with Docker
+
+```bash
+# add your key (free OpenRouter models work)
+export OPENROUTER_API_KEY=sk-or-...
+
+docker compose up --build
+```
+
+- Web: http://localhost:3000
+- AI service: http://localhost:8000 (`/health`, `/docs`)
+
+The database (Supabase) is provisioned separately — see `supabase/README.md`.
