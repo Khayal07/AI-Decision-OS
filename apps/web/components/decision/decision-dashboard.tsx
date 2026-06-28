@@ -1,5 +1,8 @@
 "use client";
 
+import { useMemo, useState } from "react";
+
+import { recomputeScores } from "@/lib/scoring";
 import type { DecisionResult, OptionResult, RiskLevel } from "@/lib/types";
 
 import { RadarChart } from "./radar-chart";
@@ -11,27 +14,54 @@ export function DecisionDashboard({
   result: DecisionResult;
   onReset: () => void;
 }) {
-  const winner = result.options.find((o) => o.is_winner) ?? result.options[0];
+  const [whatIf, setWhatIf] = useState(false);
+  const [weights, setWeights] = useState<Record<string, number>>(() =>
+    Object.fromEntries(result.criteria.map((c) => [c.name, c.weight])),
+  );
+
+  const displayed = useMemo(
+    () => (whatIf ? recomputeScores(result.options, weights) : result.options),
+    [whatIf, weights, result.options],
+  );
+
+  const winner = displayed.find((o) => o.is_winner) ?? displayed[0];
   const criteriaNames = result.criteria.map((c) => c.name);
+  const simulated = whatIf && winner.name !== result.winner;
 
   return (
     <div className="mx-auto w-full max-w-3xl text-left">
       <div className="mb-6 flex items-center justify-between gap-4">
         <h2 className="text-lg font-medium text-muted-foreground">{result.title}</h2>
-        <button
-          type="button"
-          onClick={onReset}
-          className="shrink-0 rounded-lg border border-border px-3 py-1.5 text-xs text-muted-foreground transition hover:text-foreground"
-        >
-          New decision
-        </button>
+        <div className="flex shrink-0 items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setWhatIf((v) => !v)}
+            className={[
+              "rounded-lg border px-3 py-1.5 text-xs transition",
+              whatIf
+                ? "border-accent bg-accent text-accent-foreground"
+                : "border-border text-muted-foreground hover:text-foreground",
+            ].join(" ")}
+          >
+            What if…
+          </button>
+          <button
+            type="button"
+            onClick={onReset}
+            className="rounded-lg border border-border px-3 py-1.5 text-xs text-muted-foreground transition hover:text-foreground"
+          >
+            New decision
+          </button>
+        </div>
       </div>
 
       {/* Winner */}
       <div className="rounded-2xl border border-accent/40 bg-card/60 p-6 shadow-xl shadow-black/20">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs uppercase tracking-wide text-accent">Recommended</p>
+            <p className="text-xs uppercase tracking-wide text-accent">
+              {simulated ? "Simulated winner" : "Recommended"}
+            </p>
             <p className="mt-1 text-2xl font-semibold">{winner.name}</p>
           </div>
           <div className="text-right">
@@ -40,14 +70,60 @@ export function DecisionDashboard({
           </div>
         </div>
         <p className="mt-4 text-pretty text-sm text-muted-foreground">{result.recommendation}</p>
+        {simulated && (
+          <p className="mt-2 text-xs text-amber-400">
+            With your adjusted priorities, {winner.name} comes out ahead.
+          </p>
+        )}
       </div>
+
+      {/* What-if weights */}
+      {whatIf && (
+        <section className="mt-4 rounded-xl border border-accent/30 bg-card/40 p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <h3 className="text-sm font-medium">Adjust what matters</h3>
+            <button
+              type="button"
+              onClick={() =>
+                setWeights(Object.fromEntries(result.criteria.map((c) => [c.name, c.weight])))
+              }
+              className="text-xs text-muted-foreground underline"
+            >
+              Reset
+            </button>
+          </div>
+          <div className="space-y-3">
+            {criteriaNames.map((name) => (
+              <div key={name}>
+                <div className="mb-1 flex justify-between text-xs">
+                  <span>{name}</span>
+                  <span className="tabular-nums text-muted-foreground">
+                    {Math.round((weights[name] ?? 0) * 100)}
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  value={Math.round((weights[name] ?? 0) * 100)}
+                  onChange={(e) =>
+                    setWeights((w) => ({ ...w, [name]: Number(e.target.value) / 100 }))
+                  }
+                  className="w-full accent-accent"
+                  aria-label={`Weight for ${name}`}
+                />
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Scores + radar */}
       <section className="mt-6 grid gap-6 sm:grid-cols-2">
         <div>
           <h3 className="mb-3 text-sm font-medium">Comparison</h3>
           <div className="space-y-3">
-            {result.options.map((option) => (
+            {displayed.map((option) => (
               <ScoreBar key={option.name} option={option} />
             ))}
           </div>
@@ -55,14 +131,14 @@ export function DecisionDashboard({
         {criteriaNames.length >= 3 && (
           <div>
             <h3 className="mb-1 text-sm font-medium">Criteria radar</h3>
-            <RadarChart criteria={criteriaNames} options={result.options} />
+            <RadarChart criteria={criteriaNames} options={displayed} />
           </div>
         )}
       </section>
 
       {/* Risk + cost per option */}
       <section className="mt-6 grid gap-4 sm:grid-cols-2">
-        {result.options.map((option) => (
+        {displayed.map((option) => (
           <div key={option.name} className="rounded-xl border border-border bg-card/40 p-4">
             <div className="mb-2 flex items-center justify-between">
               <p className="text-sm font-medium">{option.name}</p>
@@ -93,7 +169,7 @@ export function DecisionDashboard({
 
       {/* Pros & cons */}
       <section className="mt-6 grid gap-4 sm:grid-cols-2">
-        {result.options.map((option) => (
+        {displayed.map((option) => (
           <div key={option.name} className="rounded-xl border border-border bg-card/40 p-4">
             <p className="mb-2 text-sm font-medium">{option.name}</p>
             <ul className="space-y-1 text-xs">
