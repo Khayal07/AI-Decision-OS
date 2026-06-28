@@ -10,7 +10,8 @@ export async function* readSSE(response: Response): AsyncGenerator<SSEvent> {
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
-    buffer += decoder.decode(value, { stream: true });
+    // Normalize CRLF → LF so events split reliably regardless of server style.
+    buffer += decoder.decode(value, { stream: true }).replace(/\r\n/g, "\n");
 
     const chunks = buffer.split("\n\n");
     buffer = chunks.pop() ?? "";

@@ -15,8 +15,8 @@ class Settings(BaseSettings):
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
 
     # Model routing defaults (free OpenRouter model ids; override via env).
-    model_judge: str = "deepseek/deepseek-chat-v3-0324:free"
-    model_subagent: str = "meta-llama/llama-3.3-70b-instruct:free"
+    model_judge: str = "openai/gpt-oss-120b:free"
+    model_subagent: str = "openai/gpt-oss-20b:free"
 
     # Service auth (the Next.js BFF authenticates with this shared token).
     ai_service_token: str = "dev-internal-token"
