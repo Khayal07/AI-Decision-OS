@@ -71,11 +71,13 @@ export function DecisionExperience() {
       });
       if (!res.ok || !res.body) throw new Error("The analysis service is unavailable.");
 
+      let finalResult: DecisionResult | null = null;
       for await (const ev of readSSE(res)) {
         if (ev.event === "status") {
           setStatuses((prev) => [...prev, JSON.parse(ev.data) as AgentStatus]);
         } else if (ev.event === "result") {
-          setResult(JSON.parse(ev.data) as DecisionResult);
+          finalResult = JSON.parse(ev.data) as DecisionResult;
+          setResult(finalResult);
         } else if (ev.event === "error") {
           setError((JSON.parse(ev.data) as { message?: string }).message ?? "Analysis failed.");
           setPhase("error");
@@ -83,6 +85,15 @@ export function DecisionExperience() {
         }
       }
       setPhase((prev) => (prev === "running" ? "done" : prev));
+
+      // Persist the decision (best-effort — history is non-critical).
+      if (finalResult) {
+        void fetch("/api/decisions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ result: finalResult, raw_input: value }),
+        }).catch(() => {});
+      }
     } catch (err) {
       setError((err as Error).message);
       setPhase("error");
