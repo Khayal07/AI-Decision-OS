@@ -59,7 +59,7 @@ async def complete_json[T: BaseModel](
     user: str,
     schema: type[T],
     model: str,
-    max_tokens: int = 2000,
+    max_tokens: int = 4000,
 ) -> T:
     """Call the model and return a validated instance of ``schema``."""
     client = get_client()
@@ -72,10 +72,16 @@ async def complete_json[T: BaseModel](
     raw = await _chat(client, model, messages, max_tokens)
     try:
         return schema.model_validate_json(extract_json(raw))
-    except (ValidationError, ValueError):
+    except (ValidationError, ValueError) as err:
         messages.append({"role": "assistant", "content": raw})
         messages.append(
-            {"role": "user", "content": "That response was invalid. Return ONLY valid JSON."}
+            {
+                "role": "user",
+                "content": (
+                    f"That response was invalid: {err}. "
+                    "Fix it and return ONLY valid JSON matching the schema. No prose."
+                ),
+            }
         )
         raw = await _chat(client, model, messages, max_tokens)
         return schema.model_validate_json(extract_json(raw))
